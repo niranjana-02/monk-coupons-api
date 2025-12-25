@@ -1,232 +1,268 @@
 # 🛒 Monk Commerce – Coupon Management API (Backend Task 2025)
 
-This project implements a flexible, extensible **Coupon Management System** for an e-commerce platform.  
+This project implements a flexible and extensible **Coupon Management System** for an e-commerce platform.  
 It supports:
 
 - **Cart-wise coupons**
 - **Product-wise coupons**
 - **BxGy (Buy X Get Y) coupons**
-- Ability to **add new coupon types easily** in the future
-
-The solution follows a **Strategy Pattern**, uses **JSON-based rule storage**, and includes complete CRUD + coupon application APIs.
+- JSON-based rule storage
+- Strategy pattern for dynamic coupon evaluation
+- CRUD operations for coupons
+- Evaluating & applying coupons to a cart
 
 ---
 
 # 📌 Tech Stack
-- Java 17
-- Spring Boot 3.2.0
-- Spring Web
-- Spring Data JPA
-- H2 Database (in-memory)
-- Maven
-- Lombok
+
+- **Java 17**
+- **Spring Boot 3.2.0**
+- **Spring Web**
+- **Spring Data JPA**
+- **H2 in-memory database**
+- **Maven**
+- **Lombok**
+- **Jackson (JsonNode for rule storage)**
 
 ---
 
 # 🧠 Architecture Overview
 
-### **1️⃣ JSON-Based Coupon Rule Storage**
-Each coupon stores its logic in a single JSON field:
+## **1️⃣ Flexible JSON-Based Coupon Rule Storage**
+
+Each coupon stores its rule in a `JsonNode` field:
 
 ```java
-@Lob
-private String detailsJson;
+@Column(columnDefinition = "TEXT")
+private JsonNode details;
 ```
 
-This design enables:
-- No database schema changes for new coupon types
-- Very flexible rule definitions
-- Clean Strategy Pattern implementation
+This allows:
+
+- Dynamic rule definitions
+- No schema updates when adding new coupon types
+- Easy extensibility for future coupon logic
 
 ---
 
-### **2️⃣ Strategy Pattern for Coupon Logic**
+## **2️⃣ Strategy Pattern for Coupon Logic**
 
 ```
-CouponStrategy (interface)
+CouponStrategy
    ├── CartWiseStrategy
    ├── ProductWiseStrategy
    └── BxGyStrategy
 ```
 
-The factory selects the correct strategy at runtime.
+The `CouponStrategyFactory` picks the correct strategy based on coupon type.
 
 ---
 
-### **3️⃣ Services**
-`CouponService` performs:
-- CRUD operations
-- Discount calculation
-- Finding applicable coupons
+## **3️⃣ Service Layer**
+
+`CouponService` provides:
+
+- Create, Update, Delete coupons
+- Get applicable coupons
+- Apply a coupon and return an updated cart summary
 
 ---
 
-### **4️⃣ Controllers**
-- `/coupons` → CRUD
-- `/applicable-coupons` → list valid coupons for a cart
-- `/apply-coupon/{id}` → apply a specific coupon
+## **4️⃣ Controllers**
+
+### `/coupons`
+CRUD APIs for coupon management.
+
+### `/applicable-coupons`
+Returns **all coupons that apply** to the provided cart.
+
+### `/apply-coupon/{id}`
+Applies one coupon and returns:
+
+- Total cart price
+- Discount applied
+- Final price
+- Items in the cart
 
 ---
 
-# ✅ Implemented Coupon Cases
+# 🎯 Implemented Coupon Types
 
-## **1. Cart-Wise Coupons**
-Example:
-> 10% off when cart total ≥ 100
+## **1. Cart-wise Coupons**
 
-✔ Implemented:
-- Minimum threshold
+> Example: 10% off when cart total ≥ ₹100
+
+✔ Implements
+- Threshold check
 - Percentage discount
-- Applies once per cart
 
 ---
 
-## **2. Product-Wise Coupons**
-Example:
-> 20% off on Product ID 5
+## **2. Product-wise Coupons**
 
-✔ Implemented:
-- Matches product ID
-- Applies discount on eligible items only
+> Example: 20% off on productId = 101
+
+✔ Applies discount on matching items only
 
 ---
 
-## **3. BxGy Coupons (Buy X Get Y)**
-Example:
-> Buy 2 of [1,2] → Get 1 of [5] free  
-> Repetition limit supported
+## **3. BxGy Coupons**
 
-✔ Implemented:
+> Example: Buy 2 of product 1 → Get 1 of product 5 free (up to repetition limit)
+
+✔ Supports
 - Buy-product matching
-- Repetition calculation
-- Value of free items added as discount
 - Free-product matching
+- Repetition limit
+- Free item price calculation
 
 ---
 
-# 🚧 Unimplemented Cases (But Considered)
+# 🚧 Thoughtful Considerations (Not Implemented but Planned in Design)
 
-Even if not implemented, listing these shows strong systems thinking:
-
-- Coupon stacking & priority rules
-- Global cart-level maximum discount cap
-- Coupons with category or brand restrictions
-- Free product substitution logic
-- Complex BxGy (multiple free-product choices)
-- User-specific coupon limits (per user/per month)
-- Coupon expiration (could be added easily)
-- Multi-currency pricing
+- Coupon stacking rules
+- Category/brand-based coupons
+- Cart-level discount caps
+- User-level usage limits
+- Multi-currency support
 - Time-window-based coupons (e.g., Happy Hours)
-
+- Complex BxGy (multiple free-product choices)
+- Free product substitution logic
+- - Coupon expiration
 ---
 
 # 📌 Assumptions
 
-- Prices are provided in the cart request payload
-- Products inside the cart are valid and exist
+- Product prices are included in cart request
+- All products exist
+- JSON rule structure is valid
 - Only one coupon is applied at a time
 - All discount percentages are valid (0–100)
 - BxGy free items must exist in cart for discount to apply
-- JSON structure for coupon details is always valid
 
 ---
 
 # ⚠️ Limitations
 
-- Does not support applying **multiple coupons** at once
-- BxGy supports only one free-product type per coupon
 - No authentication or user-level coupon tracking
+- No coupon priority or conflict resolution
+- BxGy supports only one free-product type per coupon
+- Does not support applying **multiple coupons** at once
+- Free products are *not* added to cart; only discount value is applied
 - No persistence beyond in-memory H2 database
-- Free products are valued but not physically added to cart
-
 ---
 
 # 🧪 API Documentation
 
-## ➤ **POST /coupons**
-Create a new coupon.
+---
 
-### Example (Cart-Wise)
+## **➡️ POST /coupons** – Create a Coupon
+
+### Example (Cart-wise)
 ```json
 {
-  "type": "CART_WISE",
-  "detailsJson": "{\"threshold\": 100, \"discount\": 10}"
+  "type": "cart-wise",
+  "details": {
+    "threshold": 100,
+    "discount": 10
+  }
 }
 ```
 
-### Example (Product-Wise)
+### Example (Product-wise)
 ```json
 {
-  "type": "PRODUCT_WISE",
-  "detailsJson": "{\"productId\": 1, \"discount\": 20}"
+  "type": "product-wise",
+  "details": {
+    "productId": 101,
+    "discount": 20
+  }
 }
 ```
 
 ### Example (BxGy)
 ```json
 {
-  "type": "BXGY",
-  "detailsJson": "{\"buyProducts\":[{\"productId\":1,\"quantity\":2}],\"getProducts\":[{\"productId\":3,\"quantity\":1}],\"repetitionLimit\":3}"
+  "type": "bxgy",
+  "details": {
+    "buyProducts": [{ "productId": 1, "quantity": 2 }],
+    "getProducts": [{ "productId": 5, "quantity": 1 }],
+    "repetitionLimit": 3
+  }
 }
 ```
 
 ---
 
-## ➤ **GET /coupons**
-Retrieve all coupons.
+## **➡️ GET /coupons**
+Returns all coupons.
 
 ---
 
-## ➤ **POST /applicable-coupons**
-Returns all coupons applicable to a given cart.
+## **➡️ POST /applicable-coupons**
 
 ### Request:
 ```json
 {
+  "cart": {
   "items": [
     { "productId": 1, "quantity": 6, "price": 50 },
     { "productId": 2, "quantity": 3, "price": 30 }
   ]
+  }
 }
 ```
 
 ### Response:
 ```json
-[
-  {
-    "couponId": 3,
-    "type": "BXGY",
-    "discount": 100
-  }
-]
+{
+  "applicable_coupons": [
+    {
+      "coupon_id": 3,
+      "type": "bxgy",
+      "discount": 100
+    }
+  ]
+}
 ```
 
 ---
 
-## ➤ **POST /apply-coupon/{id}**
-Apply a specific coupon and return discount amount.
+## **➡️ POST /apply-coupon/{id}**
+
+### Response:
+```json
+{
+  "updated_cart": {
+    "items": [...],
+    "total_price": 150,
+    "total_discount": 20,
+    "final_price": 130
+  }
+}
+```
 
 ---
 
 # ▶️ Running the Application
 
-### **1. Clone repository**
-```bash
-git clone <repo-url>
+### Clone repository
+```sh
+git clone https://github.com/niranjana-02/monk-coupons-api.git
 cd monk-coupons-api
 ```
 
-### **2. Run the application**
-```bash
+### Run the application
+```sh
 mvn spring-boot:run
 ```
 
-### **3. Open H2 Console**
+### H2 Console
 ```
 http://localhost:8080/h2-console
 ```
 
-Use:
+JDBC URL:
 ```
 jdbc:h2:mem:couponsdb
 user: sa
@@ -235,6 +271,6 @@ password:
 
 ---
 
-#  Author
-Niranjana R  
-Monk Commerce Backend Task 2025  
+# 🧑‍💻 Author
+**Niranjana R**  
+Monk Commerce Backend Task 2025   

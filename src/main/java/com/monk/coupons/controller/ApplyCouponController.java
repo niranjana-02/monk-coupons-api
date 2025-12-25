@@ -3,6 +3,7 @@ package com.monk.coupons.controller;
 import com.monk.coupons.model.Cart;
 import com.monk.coupons.model.ApplicableCouponsResponse;
 import com.monk.coupons.model.ApplyCouponResponse;
+import com.monk.coupons.model.CartRequest;
 import com.monk.coupons.service.CouponService;
 
 import lombok.RequiredArgsConstructor;
@@ -35,10 +36,10 @@ public class ApplyCouponController {
     )
     @PostMapping("/applicable-coupons")
     public ResponseEntity<ApplicableCouponsResponse> getApplicableCoupons(
-            @RequestBody Cart cart
+            @RequestBody CartRequest cart
     ) {
         return ResponseEntity.ok(
-                couponService.getApplicableCoupons(cart)
+                couponService.getApplicableCoupons(cart.getCart())
         );
     }
 
@@ -56,10 +57,10 @@ public class ApplyCouponController {
     @PostMapping("/apply-coupon/{id}")
     public ResponseEntity<ApplyCouponResponse> applyCoupon(
             @PathVariable Long id,
-            @RequestBody Cart cart
+            @RequestBody CartRequest cart
     ) {
         return ResponseEntity.ok(
-                couponService.applyCoupon(id, cart)
+                couponService.applyCoupon(id, cart.getCart())
         );
     }
 }
