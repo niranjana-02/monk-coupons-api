@@ -1,0 +1,19 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+target/
+!.mvn/wrapper/maven-wrapper.jar
+*.log
+*.class
+*.jar
+*.war
+*.ear
+
+# IntelliJ
+.idea/
+*.iml
+out/
+
+# MacOS
+.DS_Store
+
