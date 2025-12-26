@@ -1,6 +1,5 @@
 package com.monk.coupons.controller;
 
-import com.monk.coupons.model.Cart;
 import com.monk.coupons.model.ApplicableCouponsResponse;
 import com.monk.coupons.model.ApplyCouponResponse;
 import com.monk.coupons.model.CartRequest;

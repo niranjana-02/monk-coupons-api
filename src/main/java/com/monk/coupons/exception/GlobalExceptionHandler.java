@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
 
@@ -24,7 +25,6 @@ public class GlobalExceptionHandler {
                 ex.getMessage(),
                 HttpStatus.NOT_FOUND.value()
         );
-
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
@@ -40,13 +40,43 @@ public class GlobalExceptionHandler {
                 "Malformed JSON request",
                 HttpStatus.BAD_REQUEST.value()
         );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
+     * Handles IllegalArgumentException (HTTP 400)
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidInput(IllegalArgumentException ex) {
+
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                "Invalid Input",
+                ex.getMessage(),
+                HttpStatus.BAD_REQUEST.value()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
+     * Handles MethodArgumentTypeMismatchException (HTTP 400)
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                "Invalid Input",
+                "Invalid ID format. Expected a numeric value.",
+                HttpStatus.BAD_REQUEST.value()
+        );
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
 
     /**
-     * Handles all unexpected errors (HTTP 500)
+     * Global fallback handler (500)
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneralErrors(Exception ex) {
@@ -54,10 +84,9 @@ public class GlobalExceptionHandler {
         ErrorResponse response = new ErrorResponse(
                 LocalDateTime.now(),
                 "Internal Server Error",
-                ex.getMessage(),
+                "An unexpected error occurred. Please try again later.",
                 HttpStatus.INTERNAL_SERVER_ERROR.value()
         );
-
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 }

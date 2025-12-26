@@ -13,4 +13,12 @@ public interface CouponStrategy {
      * @return the computed discount amount
      */
     double calculateDiscount(Coupon coupon, Cart cart);
+
+    /**
+     * Apply discount and mutate cart items (for BxGy).
+     * @param coupon the coupon to evaluate
+     * @param cart   the cart for which the discount is calculated
+     *  @return cart
+     */
+    Cart applyCoupon(Coupon coupon, Cart cart);
 }

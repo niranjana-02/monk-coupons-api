@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.monk.coupons.config.JsonNodeConverter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Entity
@@ -23,6 +25,7 @@ public class Coupon {
     )
     private Long id;
 
+    @NotBlank(message = "type is required")
     @Schema(
             description = """
                     Type of coupon. Determines the discount strategy applied.
@@ -36,6 +39,7 @@ public class Coupon {
     )
     private String type;
 
+    @NotNull(message = "details is required")
     @Convert(converter = JsonNodeConverter.class)
     @Column(columnDefinition = "TEXT")
     @Schema(

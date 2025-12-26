@@ -37,4 +37,33 @@ public class ProductWiseStrategy implements CouponStrategy {
                 .mapToDouble(i -> i.getPrice() * i.getQuantity() * discountPercent)
                 .sum();
     }
+
+    @Override
+    public Cart applyCoupon(Coupon coupon, Cart cart) {
+
+        JsonNode detailsNode = coupon.getDetails();
+        if (detailsNode == null || cart.getItems() == null || cart.getItems().isEmpty()) {
+            return cart;
+        }
+
+        ProductWiseDetails details = mapper.convertValue(detailsNode, ProductWiseDetails.class);
+
+        if (details.getProductId() == null || details.getDiscount() == null) {
+            return cart;
+        }
+
+        int targetProductId = details.getProductId();
+        double discountPercent = details.getDiscount() / 100.0;
+
+        for (CartItem item : cart.getItems()) {
+
+            if (item.getProductId() == targetProductId) {
+                double discount = item.getPrice() * item.getQuantity() * discountPercent;
+                item.setTotalDiscount(discount);
+            }
+            // else → DO NOT modify total_discount
+        }
+
+        return cart;
+    }
 }

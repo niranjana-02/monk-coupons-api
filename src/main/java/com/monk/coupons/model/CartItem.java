@@ -40,4 +40,7 @@ public class CartItem {
             required = true
     )
     private Double price;
+
+    @Schema(description = "Total discount applied on this item", example = "10.0")
+    private Double totalDiscount = 0.0;
 }

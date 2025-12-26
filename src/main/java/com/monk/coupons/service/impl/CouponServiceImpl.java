@@ -27,6 +27,28 @@ public class CouponServiceImpl implements CouponService {
 
     @Override
     public Coupon createCoupon(Coupon coupon) {
+
+        if (coupon.getType() == null || coupon.getType().isBlank()) {
+            throw new IllegalArgumentException("Field 'type' is required.");
+        }
+        if (coupon.getDetails() == null) {
+            throw new IllegalArgumentException("Field 'details' is required and must be valid JSON.");
+        }
+
+        // Normalize the type value
+        String type = coupon.getType().trim().toLowerCase();
+
+        switch (type) {
+            case "cart-wise", "product-wise", "bxgy" -> {
+                // valid → do nothing
+            }
+            default -> throw new IllegalArgumentException(
+                    "Invalid coupon type. Allowed values: cart-wise, product-wise, bxgy."
+            );
+        }
+
+        coupon.setType(type);
+
         return repository.save(coupon);
     }
 
@@ -44,10 +66,17 @@ public class CouponServiceImpl implements CouponService {
     @Override
     public Coupon updateCoupon(Long id, Coupon updated) {
         Coupon existing = getCouponById(id);
+
+        if (updated.getType() == null || updated.getDetails() == null) {
+            throw new IllegalArgumentException("Both 'type' and 'details' fields are required for updating a coupon.");
+        }
+
         existing.setType(updated.getType());
         existing.setDetails(updated.getDetails());
+
         return repository.save(existing);
     }
+
 
     @Override
     public void deleteCoupon(Long id) {
@@ -81,12 +110,20 @@ public class CouponServiceImpl implements CouponService {
     public ApplyCouponResponse applyCoupon(Long couponId, Cart cart) {
 
         Coupon coupon = getCouponById(couponId);
-        CouponStrategy strategy = strategyFactory.getStrategy(coupon.getType());
 
-        // calculate discount
+        if (cart == null || cart.getItems() == null) {
+            UpdatedCart updated = new UpdatedCart(
+                    List.of(),
+                    0.0,
+                    0.0,
+                    0.0
+            );
+            return new ApplyCouponResponse(updated);
+        }
+
+        CouponStrategy strategy = strategyFactory.getStrategy(coupon.getType());
         double discount = strategy.calculateDiscount(coupon, cart);
 
-        // calculate totals
         double totalPrice = cart.getItems().stream()
                 .mapToDouble(i -> i.getPrice() * i.getQuantity())
                 .sum();

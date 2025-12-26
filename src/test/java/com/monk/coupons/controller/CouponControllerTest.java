@@ -77,6 +77,30 @@ class CouponControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void testCreateCoupon_EmptyBody() throws Exception {
+        mockMvc.perform(post("/coupons")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(""))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testCreateCoupon_InvalidType() throws Exception {
+        when(couponService.createCoupon(any()))
+                .thenThrow(new IllegalArgumentException("Invalid coupon type"));
+
+        mockMvc.perform(post("/coupons")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "type": "abc",
+                                  "details": { "threshold": 100, "discount": 10 }
+                                }
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
     // ----------------------------------------------------------
     // GET ALL
     // ----------------------------------------------------------
@@ -99,6 +123,17 @@ class CouponControllerTest {
                 .andExpect(jsonPath("$.length()").value(0));
     }
 
+    @Test
+    void testGetAllCoupons_ContentStructure() throws Exception {
+        when(couponService.getAllCoupons()).thenReturn(List.of(mockCoupon(1L)));
+
+        mockMvc.perform(get("/coupons"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].type").value("cart-wise"))
+                .andExpect(jsonPath("$[0].details.threshold").value(100));
+    }
+
     // ----------------------------------------------------------
     // GET BY ID
     // ----------------------------------------------------------
@@ -119,6 +154,12 @@ class CouponControllerTest {
 
         mockMvc.perform(get("/coupons/10"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testGetCouponById_InvalidIdFormat() throws Exception {
+        mockMvc.perform(get("/coupons/abc"))
+                .andExpect(status().isBadRequest());
     }
 
     // ----------------------------------------------------------
@@ -163,6 +204,38 @@ class CouponControllerTest {
                 .andExpect(status().isNotFound());
     }
 
+    @Test
+    void testUpdateCoupon_MissingDetails() throws Exception {
+
+        when(couponService.updateCoupon(eq(1L), any()))
+                .thenThrow(new IllegalArgumentException("Both 'type' and 'details' fields are required"));
+
+        mockMvc.perform(put("/coupons/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "type": "cart-wise"
+                                }
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testUpdateCoupon_InvalidJSON() throws Exception {
+        mockMvc.perform(put("/coupons/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ invalid json"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testUpdateCoupon_EmptyBody() throws Exception {
+        mockMvc.perform(put("/coupons/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(""))
+                .andExpect(status().isBadRequest());
+    }
+
     // ----------------------------------------------------------
     // DELETE
     // ----------------------------------------------------------
@@ -182,5 +255,20 @@ class CouponControllerTest {
 
         mockMvc.perform(delete("/coupons/5"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testDeleteCoupon_InvalidIdFormat() throws Exception {
+        mockMvc.perform(delete("/coupons/xyz"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testDeleteCoupon_ContentType() throws Exception {
+        doNothing().when(couponService).deleteCoupon(1L);
+
+        mockMvc.perform(delete("/coupons/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_PLAIN));
     }
 }

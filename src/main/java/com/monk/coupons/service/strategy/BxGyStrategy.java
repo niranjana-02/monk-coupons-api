@@ -64,4 +64,55 @@ public class BxGyStrategy implements CouponStrategy {
 
         return freeQty * freeItem.getPrice();
     }
+
+    @Override
+    public Cart applyCoupon(Coupon coupon, Cart cart) {
+
+        JsonNode detailsNode = coupon.getDetails();
+        if (detailsNode == null || cart.getItems() == null || cart.getItems().isEmpty()) {
+            cart.getItems().forEach(i -> i.setTotalDiscount(0.0));
+            return cart;
+        }
+
+        BxGyDetails details = mapper.convertValue(detailsNode, BxGyDetails.class);
+
+        if (details.getBuyProducts() == null || details.getBuyProducts().isEmpty()
+                || details.getGetProducts() == null || details.getGetProducts().isEmpty()) {
+            cart.getItems().forEach(i -> i.setTotalDiscount(0.0));
+            return cart;
+        }
+
+        BxGyProduct buy = details.getBuyProducts().get(0);
+        BxGyProduct get = details.getGetProducts().get(0);
+
+        int totalBuyQty = cart.getItems().stream()
+                .filter(i -> i.getProductId() == buy.getProductId())
+                .mapToInt(CartItem::getQuantity)
+                .sum();
+
+        int repetitions = Math.min(totalBuyQty / buy.getQuantity(), details.getRepetitionLimit());
+        int freeQty = repetitions * get.getQuantity();
+
+        cart.getItems().forEach(i -> i.setTotalDiscount(0.0));
+
+        if (freeQty <= 0) {
+            return cart;
+        }
+
+        CartItem freeItem = cart.getItems().stream()
+                .filter(i -> i.getProductId() == get.getProductId())
+                .findFirst()
+                .orElse(null);
+
+        if (freeItem == null) {
+            return cart;
+        }
+
+        freeItem.setQuantity(freeItem.getQuantity() + freeQty);
+
+        double discount = freeQty * freeItem.getPrice();
+        freeItem.setTotalDiscount(discount);
+
+        return cart;
+    }
 }
