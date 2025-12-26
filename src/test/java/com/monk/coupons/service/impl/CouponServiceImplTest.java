@@ -238,13 +238,19 @@ class CouponServiceImplTest {
         when(couponRepository.findById(1L)).thenReturn(Optional.of(coupon));
         when(strategyFactory.getStrategy("cart-wise")).thenReturn(couponStrategy);
 
+        // Mock calculateDiscount
         when(couponStrategy.calculateDiscount(any(), any())).thenReturn(30.0);
+
+        // Mock applyCoupon to return the same cart
+        when(couponStrategy.applyCoupon(any(), any()))
+                .thenAnswer(invocation -> invocation.getArgument(1));
 
         ApplyCouponResponse response = service.applyCoupon(1L, cart);
 
         assertNotNull(response.getUpdatedCart());
         assertEquals(30.0, response.getUpdatedCart().getTotalDiscount());
     }
+
 
     @Test
     void testApplyCoupon_MultipleItems() {
@@ -266,6 +272,8 @@ class CouponServiceImplTest {
         when(couponRepository.findById(1L)).thenReturn(Optional.of(coupon));
         when(strategyFactory.getStrategy("cart-wise")).thenReturn(couponStrategy);
         when(couponStrategy.calculateDiscount(any(), any())).thenReturn(30.0);
+        when(couponStrategy.applyCoupon(any(), any()))
+                .thenAnswer(invocation -> invocation.getArgument(1));
 
         ApplyCouponResponse response = service.applyCoupon(1L, cart);
 

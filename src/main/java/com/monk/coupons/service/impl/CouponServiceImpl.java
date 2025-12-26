@@ -122,6 +122,8 @@ public class CouponServiceImpl implements CouponService {
         }
 
         CouponStrategy strategy = strategyFactory.getStrategy(coupon.getType());
+        cart = strategy.applyCoupon(coupon, cart);
+
         double discount = strategy.calculateDiscount(coupon, cart);
 
         double totalPrice = cart.getItems().stream()

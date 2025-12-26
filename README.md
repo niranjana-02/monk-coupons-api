@@ -234,7 +234,9 @@ Returns all coupons.
 ```json
 {
   "updated_cart": {
-    "items": [...],
+    "items": [
+      { "productId": 1, "quantity": 2, "price": 50 }
+    ],
     "total_price": 150,
     "total_discount": 20,
     "final_price": 130
