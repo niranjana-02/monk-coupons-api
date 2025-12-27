@@ -128,7 +128,7 @@ Applies one coupon and returns:
 - Time-window-based coupons (e.g., Happy Hours)
 - Complex BxGy (multiple free-product choices)
 - Free product substitution logic
-- - Coupon expiration
+- Coupon expiration
 ---
 
 # 📌 Assumptions
@@ -235,11 +235,11 @@ Returns all coupons.
 {
   "updated_cart": {
     "items": [
-      { "productId": 1, "quantity": 2, "price": 50 }
+      { "productId": 1, "quantity": 2, "price": 50, "total_discount": 20 }
     ],
-    "total_price": 150,
+    "total_price": 100,
     "total_discount": 20,
-    "final_price": 130
+    "final_price": 80
   }
 }
 ```
