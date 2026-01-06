@@ -1,4 +1,4 @@
-# 🛒 Monk Commerce – Coupon Management API (Backend Task 2025)
+# 🛒Coupon Management API 
 
 This project implements a flexible and extensible **Coupon Management System** for an e-commerce platform.  
 It supports:
@@ -274,5 +274,4 @@ password:
 ---
 
 # 🧑‍💻 Author
-**Niranjana R**  
-Monk Commerce Backend Task 2025   
+**Niranjana R**
